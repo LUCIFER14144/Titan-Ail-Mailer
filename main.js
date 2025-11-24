@@ -1,4 +1,5 @@
 import './index.css';
+import { parseCSV } from './csvParser.js';
 
 // --- Tab Switching Logic ---
 const tabs = document.querySelectorAll('.nav-btn');
@@ -6,11 +7,8 @@ const contents = document.querySelectorAll('.tab-content');
 
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-        // Remove active class from all
         tabs.forEach(t => t.classList.remove('active'));
         contents.forEach(c => c.classList.remove('active'));
-
-        // Add active class to clicked tab and corresponding content
         tab.classList.add('active');
         const targetId = tab.getAttribute('data-tab');
         document.getElementById(targetId).classList.add('active');
@@ -25,15 +23,35 @@ function showResult(elementId, data, isError = false) {
     el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 }
 
+// --- CSV File Upload Handler ---
+const csvFileInput = document.getElementById('csvFile');
+csvFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    document.getElementById('recipientsInput').value = text;
+});
+
 // --- Bulk Sender Logic ---
 const sendBulkBtn = document.getElementById('sendBulkBtn');
 sendBulkBtn.addEventListener('click', async () => {
-    const recipientsRaw = document.getElementById('recipientsInput').value;
+    const recipientsRaw = document.getElementById('recipientsInput').value.trim();
     const subjectTemplate = document.getElementById('subjectInput').value;
     const htmlTemplate = document.getElementById('htmlInput').value;
 
+    if (!recipientsRaw) {
+        return alert('Please provide recipients (CSV or text)');
+    }
+
     try {
-        const recipients = JSON.parse(recipientsRaw);
+        // Parse CSV or JSON
+        let recipients;
+        if (recipientsRaw.startsWith('[')) {
+            recipients = JSON.parse(recipientsRaw);
+        } else {
+            recipients = parseCSV(recipientsRaw);
+        }
+
         sendBulkBtn.textContent = 'Sending...';
         sendBulkBtn.disabled = true;
 
@@ -44,12 +62,50 @@ sendBulkBtn.addEventListener('click', async () => {
         });
         const data = await res.json();
         showResult('bulkResult', data, !res.ok);
+
+        // Update analytics
+        loadAnalytics();
     } catch (err) {
-        showResult('bulkResult', 'Error: Invalid JSON or Network Issue\n' + err.message, true);
+        showResult('bulkResult', 'Error: ' + err.message, true);
     } finally {
         sendBulkBtn.textContent = 'Send Campaign';
         sendBulkBtn.disabled = false;
     }
+});
+
+// --- SMTP Config Logic ---
+const smtpProviderSelect = document.getElementById('smtpProvider');
+smtpProviderSelect.addEventListener('change', () => {
+    const isCustom = smtpProviderSelect.value === 'custom';
+    document.getElementById('gmailConfig').style.display = isCustom ? 'none' : 'block';
+    document.getElementById('customConfig').style.display = isCustom ? 'block' : 'none';
+});
+
+const saveSmtpBtn = document.getElementById('saveSmtpBtn');
+saveSmtpBtn.addEventListener('click', () => {
+    const provider = smtpProviderSelect.value;
+    let config = {};
+
+    if (provider === 'gmail') {
+        config = {
+            provider: 'gmail',
+            user: document.getElementById('gmailUser').value,
+            pass: document.getElementById('gmailPass').value
+        };
+    } else {
+        config = {
+            provider: 'custom',
+            host: document.getElementById('smtpHost').value,
+            port: document.getElementById('smtpPort').value,
+            user: document.getElementById('smtpUser').value,
+            pass: document.getElementById('smtpPassword').value,
+            tls: document.getElementById('smtpTLS').checked
+        };
+    }
+
+    // Save to localStorage (for MVP; in production, this would go to backend)
+    localStorage.setItem('smtpConfig', JSON.stringify(config));
+    showResult('smtpResult', 'SMTP Configuration saved successfully! (Note: In production, this should be saved server-side with encryption.)');
 });
 
 // --- AI Generator Logic ---
@@ -71,16 +127,15 @@ generateAiBtn.addEventListener('click', async () => {
         });
         const data = await res.json();
 
-        // Auto-fill bulk form if successful
         if (res.ok) {
             document.getElementById('subjectInput').value = data.subject || '';
             document.getElementById('htmlInput').value = data.html || data.text || '';
-            showResult('aiResult', 'Success! Content copied to Bulk Sender form.\n\n' + JSON.stringify(data, null, 2));
+            showResult('aiResult', 'Success! Content copied to Bulk Sender form.\\n\\n' + JSON.stringify(data, null, 2));
         } else {
             showResult('aiResult', data, true);
         }
     } catch (err) {
-        showResult('aiResult', err.message, true);
+        showResult('aiResult', 'Error: ' + err.message, true);
     } finally {
         generateAiBtn.textContent = 'Generate Content';
         generateAiBtn.disabled = false;
@@ -105,9 +160,23 @@ checkSpamBtn.addEventListener('click', async () => {
         const data = await res.json();
         showResult('spamResult', data, !res.ok);
     } catch (err) {
-        showResult('spamResult', err.message, true);
+        showResult('spamResult', 'Error: ' + err.message, true);
     } finally {
         checkSpamBtn.textContent = 'Check Score';
         checkSpamBtn.disabled = false;
     }
 });
+
+// --- Analytics Logic ---
+function loadAnalytics() {
+    // For MVP, use localStorage. In production, fetch from backend API
+    const stats = JSON.parse(localStorage.getItem('emailStats') || '{"sentToday":0,"failed":0}');
+    document.getElementById('statSentToday').textContent = stats.sentToday || 0;
+    document.getElementById('statFailed').textContent = stats.failed || 0;
+}
+
+const refreshStatsBtn = document.getElementById('refreshStatsBtn');
+refreshStatsBtn.addEventListener('click', loadAnalytics);
+
+// Load analytics on page load
+loadAnalytics();

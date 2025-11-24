@@ -84,8 +84,15 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Cards & Forms */
@@ -94,7 +101,7 @@ body {
   padding: 2rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .card h2 {
@@ -116,7 +123,9 @@ body {
   color: var(--text-dim);
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
   width: 100%;
   padding: 0.8rem;
   background: #222;
@@ -129,7 +138,9 @@ input, textarea, select {
   transition: var(--transition);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
   background: #2a2a2a;
@@ -172,11 +183,64 @@ small {
   font-family: monospace;
   white-space: pre-wrap;
   color: #ddd;
-  display: none; /* Hidden by default */
+  display: none;
+  /* Hidden by default */
 }
 
 .result-box:not(:empty) {
   display: block;
+}
+
+/* Analytics Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #111;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.stat-number {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+}
+
+/* File Inputs */
+input[type="file"] {
+  padding: 0.6rem;
+  background: #111;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  color: var(--text-light);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) - 5%));
 }
 
 .footer {

@@ -15,8 +15,10 @@
       <h1 class="logo">Titan‑Ail‑Mailer</h1>
       <nav class="nav-tabs">
         <button class="nav-btn active" data-tab="bulk">Bulk Sender</button>
+        <button class="nav-btn" data-tab="smtp">SMTP Config</button>
         <button class="nav-btn" data-tab="ai">AI Generator</button>
         <button class="nav-btn" data-tab="spam">Spam Checker</button>
+        <button class="nav-btn" data-tab="analytics">Analytics</button>
       </nav>
     </header>
 
@@ -25,23 +27,91 @@
       <section id="bulk" class="tab-content active">
         <div class="card">
           <h2>Bulk Email Campaign</h2>
+
           <div class="form-group">
-            <label>Recipients (JSON format)</label>
-            <textarea id="recipientsInput"
-              placeholder='[{"email": "test@example.com", "name": "John"}, ...]'></textarea>
-            <small>Enter a list of objects with email and other tags.</small>
+            <label>Upload Recipients (CSV or paste text)</label>
+            <input type="file" id="csvFile" accept=".csv,.txt" />
+            <small>OR paste CSV/plain text below (format: email,name,company...)</small>
+            <textarea id="recipientsInput" placeholder="email,name,company
+john@example.com,John Doe,Acme Inc
+jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           </div>
+
           <div class="form-group">
-            <label>Subject Template</label>
-            <input type="text" id="subjectInput" placeholder="Hello {{name}}!" />
+            <label>Subject Template (use {{tags}})</label>
+            <input type="text" id="subjectInput" placeholder="Hello {{name}} from {{company}}!" />
+            <small>Available tags: {{email}}, {{name}}, {{company}}, {{phone}}, {{address}}, {{city}}, {{date}},
+              {{time}}, {{invoice}}, {{amount}}, {{custom1}}, {{custom2}}</small>
           </div>
+
           <div class="form-group">
             <label>Email Body (HTML)</label>
-            <textarea id="htmlInput" placeholder="<p>Hi {{name}}, here is your invoice {{invoice}}...</p>"
-              rows="6"></textarea>
+            <textarea id="htmlInput"
+              placeholder="<p>Hi {{name}},</p><p>Your invoice #{{invoice}} for {{amount}} is ready.</p>"
+              rows="8"></textarea>
           </div>
+
+          <div class="form-group">
+            <label>Attachments (optional)</label>
+            <input type="file" id="attachmentFile" multiple />
+            <small>Upload PDF, images, or other files to attach</small>
+          </div>
+
           <button id="sendBulkBtn" class="cta-button">Send Campaign</button>
           <div id="bulkResult" class="result-box"></div>
+        </div>
+      </section>
+
+      <!-- SMTP Config Section -->
+      <section id="smtp" class="tab-content">
+        <div class="card">
+          <h2>SMTP Configuration</h2>
+          <div class="form-group">
+            <label>SMTP Provider</label>
+            <select id="smtpProvider">
+              <option value="gmail">Gmail (App Password)</option>
+              <option value="custom">Custom SMTP Server</option>
+            </select>
+          </div>
+
+          <div id="gmailConfig">
+            <div class="form-group">
+              <label>Gmail Address</label>
+              <input type="email" id="gmailUser" placeholder="you@gmail.com" />
+            </div>
+            <div class="form-group">
+              <label>App Password</label>
+              <input type="password" id="gmailPass" placeholder="16-character app password" />
+              <small>Generate at: <a href="https://myaccount.google.com/apppasswords" target="_blank">Google App
+                  Passwords</a></small>
+            </div>
+          </div>
+
+          <div id="customConfig" style="display:none;">
+            <div class="form-group">
+              <label>SMTP Host</label>
+              <input type="text" id="smtpHost" placeholder="smtp.yourserver.com" />
+            </div>
+            <div class="form-group">
+              <label>SMTP Port</label>
+              <input type="number" id="smtpPort" placeholder="587" value="587" />
+            </div>
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="smtpUser" />
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="smtpPassword" />
+            </div>
+            <div class="form-group">
+              <label>Use TLS</label>
+              <input type="checkbox" id="smtpTLS" checked />
+            </div>
+          </div>
+
+          <button id="saveSmtpBtn" class="cta-button">Save Configuration</button>
+          <div id="smtpResult" class="result-box"></div>
         </div>
       </section>
 
@@ -81,6 +151,32 @@
           </div>
           <button id="checkSpamBtn" class="cta-button">Check Score</button>
           <div id="spamResult" class="result-box"></div>
+        </div>
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics" class="tab-content">
+        <div class="card">
+          <h2>Email Analytics</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Sent Today</h3>
+              <p id="statSentToday" class="stat-number">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>Failed</h3>
+              <p id="statFailed" class="stat-number">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>Rate Limit</h3>
+              <p id="statRateLimit" class="stat-number">50/hr</p>
+            </div>
+            <div class="stat-card">
+              <h3>Daily Limit</h3>
+              <p id="statDailyLimit" class="stat-number">500/day</p>
+            </div>
+          </div>
+          <button id="refreshStatsBtn" class="cta-button">Refresh Stats</button>
         </div>
       </section>
     </main>
