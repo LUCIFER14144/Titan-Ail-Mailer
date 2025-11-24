@@ -1,0 +1,15 @@
+{
+    "name": "titan-ail-mailer-api",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "echo 'Vercel functions run in the cloud, no local dev script.'"
+    },
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "dotenv": "^16.4.5",
+        "jsonwebtoken": "^9.0.2",
+        "@sendgrid/mail": "^8.1.0"
+    }
+}
