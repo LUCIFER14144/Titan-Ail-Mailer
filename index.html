@@ -52,28 +52,6 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           </div>
 
           <div class="form-group">
-            <label>Upload HTML Template (for Attachment)</label>
-            <input type="file" id="htmlTemplateFile" accept=".html" />
-            <small>Upload an .html file. It will be converted to the selected format and attached to each email. Tags
-              like {{invoice}} work!</small>
-          </div>
-
-          <div class="form-group">
-            <label>Attachment Format</label>
-            <select id="attachmentFormat">
-              <option value="pdf">PDF</option>
-              <option value="jpg">JPG (Image)</option>
-              <option value="png">PNG (Image)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="rotateFormats" />
-              Rotate formats across recipients (PDF → JPG → PNG → PDF...)
-            </label>
-            <small>If enabled, each recipient gets a different format in rotation, regardless of the selection
-              above</small>
           </div>
 
           <button id="sendBulkBtn" class="cta-button">Send Campaign</button>

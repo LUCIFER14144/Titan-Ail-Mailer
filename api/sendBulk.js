@@ -1,62 +1,78 @@
 import { sendMail } from './utils/mailer.js';
 import PDFDocument from 'pdfkit';
-import { JSDOM } from 'jsdom';
-import { createCanvas } from 'canvas';
 
 // Helper to replace {{tags}} in string
 function replaceTags(template, data) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
 }
 
-// Helper to parse HTML and extract text with basic formatting
-function parseBasicHtml(htmlContent) {
-    const dom = new JSDOM(htmlContent);
-    const document = dom.window.document;
-
+// Simple HTML parser that extracts text with basic formatting
+function parseHtmlSimple(html) {
     const elements = [];
 
-    // Process text nodes and basic tags
-    const walk = (node) => {
-        if (node.nodeType === 3) { // Text node
-            const text = node.textContent.trim();
+    // Replace common HTML entities
+    html = html.replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+
+    // Match HTML tags
+    const tagRegex = /<(\w+)[^>]*>(.*?)<\/\1>|<br\s*\/?>/gi;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = tagRegex.exec(html)) !== null) {
+        // Add any text before this tag
+        if (match.index > lastIndex) {
+            const text = html.substring(lastIndex, match.index).trim();
             if (text) {
                 elements.push({ type: 'text', content: text });
             }
-        } else if (node.nodeType === 1) { // Element node
-            const tagName = node.tagName.toLowerCase();
+        }
 
-            if (tagName === 'h1') {
-                elements.push({ type: 'h1', content: node.textContent.trim() });
-            } else if (tagName === 'h2') {
-                elements.push({ type: 'h2', content: node.textContent.trim() });
-            } else if (tagName === 'h3') {
-                elements.push({ type: 'h3', content: node.textContent.trim() });
-            } else if (tagName === 'p') {
-                elements.push({ type: 'p', content: node.textContent.trim() });
-            } else if (tagName === 'br') {
-                elements.push({ type: 'break' });
-            } else if (tagName === 'strong' || tagName === 'b') {
-                elements.push({ type: 'bold', content: node.textContent.trim() });
-            } else if (tagName === 'em' || tagName === 'i') {
-                elements.push({ type: 'italic', content: node.textContent.trim() });
-            } else {
-                // For other tags, process children
-                for (const child of node.childNodes) {
-                    walk(child);
-                }
+        const tag = match[1] ? match[1].toLowerCase() : 'br';
+        const content = match[2] || '';
+
+        if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
+            elements.push({ type: tag, content: content.replace(/<[^>]*>/g, '').trim() });
+        } else if (tag === 'p') {
+            elements.push({ type: 'p', content: content.replace(/<[^>]*>/g, '').trim() });
+        } else if (tag === 'strong' || tag === 'b') {
+            elements.push({ type: 'bold', content: content.replace(/<[^>]*>/g, '').trim() });
+        } else if (tag === 'em' || tag === 'i') {
+            elements.push({ type: 'italic', content: content.replace(/<[^>]*>/g, '').trim() });
+        } else if (tag === 'br') {
+            elements.push({ type: 'break' });
+        } else if (tag === 'div' || tag === 'span') {
+            // Recursively parse content
+            const innerText = content.replace(/<[^>]*>/g, '').trim();
+            if (innerText) {
+                elements.push({ type: 'text', content: innerText });
             }
         }
-    };
 
-    walk(document.body);
+        lastIndex = tagRegex.lastIndex;
+    }
+
+    // Add any remaining text
+    if (lastIndex < html.length) {
+        const text = html.substring(lastIndex).replace(/<[^>]*>/g, '').trim();
+        if (text) {
+            elements.push({ type: 'text', content: text });
+        }
+    }
+
     return elements;
 }
 
-// Helper to render HTML to PDF
+// Render HTML to PDF using PDFKit
 async function renderToPdf(htmlContent) {
     return new Promise((resolve, reject) => {
         try {
-            const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+            const doc = new PDFDocument({
+                size: 'A4',
+                margins: { top: 50, bottom: 50, left: 50, right: 50 }
+            });
             const chunks = [];
 
             doc.on('data', chunk => chunks.push(chunk));
@@ -64,7 +80,7 @@ async function renderToPdf(htmlContent) {
             doc.on('error', reject);
 
             // Parse HTML
-            const elements = parseBasicHtml(htmlContent);
+            const elements = parseHtmlSimple(htmlContent);
 
             // Render elements
             for (const element of elements) {
@@ -96,70 +112,6 @@ async function renderToPdf(htmlContent) {
             reject(error);
         }
     });
-}
-
-// Helper to render HTML to Image
-async function renderToImage(htmlContent, format) {
-    try {
-        // First generate PDF
-        const pdfBuffer = await renderToPdf(htmlContent);
-
-        // For images, we'll create a simple canvas representation
-        const canvas = createCanvas(800, 1000);
-        const ctx = canvas.getContext('2d');
-
-        // Fill white background
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, 800, 1000);
-
-        // Parse and render text
-        const elements = parseBasicHtml(htmlContent);
-        let y = 50;
-
-        ctx.fillStyle = 'black';
-        for (const element of elements) {
-            if (element.type === 'h1') {
-                ctx.font = 'bold 32px Arial';
-                ctx.fillText(element.content, 50, y);
-                y += 50;
-            } else if (element.type === 'h2') {
-                ctx.font = 'bold 24px Arial';
-                ctx.fillText(element.content, 50, y);
-                y += 40;
-            } else if (element.type === 'h3') {
-                ctx.font = 'bold 20px Arial';
-                ctx.fillText(element.content, 50, y);
-                y += 35;
-            } else if (element.type === 'p' || element.type === 'text') {
-                ctx.font = '16px Arial';
-                // Wrap text
-                const words = element.content.split(' ');
-                let line = '';
-                for (const word of words) {
-                    const testLine = line + word + ' ';
-                    const metrics = ctx.measureText(testLine);
-                    if (metrics.width > 700) {
-                        ctx.fillText(line, 50, y);
-                        line = word + ' ';
-                        y += 25;
-                    } else {
-                        line = testLine;
-                    }
-                }
-                ctx.fillText(line, 50, y);
-                y += 30;
-            }
-
-            if (y > 950) break; // Stop if we run out of space
-        }
-
-        // Convert to buffer
-        const buffer = canvas.toBuffer(format === 'jpg' ? 'image/jpeg' : 'image/png', { quality: 0.9 });
-        return buffer;
-    } catch (error) {
-        console.error('Error rendering to image:', error);
-        throw error;
-    }
 }
 
 // Helper for delay
@@ -198,8 +150,8 @@ export default async (req, res) => {
         skipped: []
     };
 
-    // Define format rotation order
-    const formatOrder = ['pdf', 'jpg', 'png'];
+    // Note: Only PDF format is supported for now due to Vercel limitations
+    // JPG/PNG require native dependencies that can't be installed on serverless
 
     // Process in serial to respect rate limits
     for (let i = 0; i < recipients.length; i++) {
@@ -222,48 +174,34 @@ export default async (req, res) => {
         // Prepare attachments
         const attachments = [];
 
-        // If HTML template is provided, convert and attach
+        // If HTML template is provided, convert to PDF and attach
         if (pdfHtmlTemplate && pdfHtmlTemplate.trim()) {
             try {
                 const personalizedHtml = replaceTags(pdfHtmlTemplate, recipient);
 
-                // Determine format (rotate if enabled)
-                let currentFormat = attachmentFormat;
-                if (rotateFormats) {
-                    currentFormat = formatOrder[i % formatOrder.length];
-                }
-
-                console.log(`Rendering ${currentFormat.toUpperCase()} for ${emailField}...`);
-
-                let fileBuffer;
-                if (currentFormat === 'pdf') {
-                    fileBuffer = await renderToPdf(personalizedHtml);
-                } else {
-                    fileBuffer = await renderToImage(personalizedHtml, currentFormat);
-                }
+                console.log(`Rendering PDF for ${emailField}...`);
+                const fileBuffer = await renderToPdf(personalizedHtml);
 
                 // Auto-generate filename
                 let filename;
                 const baseName = recipient.invoice || recipient.Invoice || emailField.split('@')[0];
 
                 if (recipient.invoice || recipient.Invoice) {
-                    filename = `Invoice_${baseName}.${currentFormat === 'jpg' ? 'jpg' : currentFormat}`;
+                    filename = `Invoice_${baseName}.pdf`;
                 } else {
-                    filename = `Document_${baseName}.${currentFormat === 'jpg' ? 'jpg' : currentFormat}`;
+                    filename = `Document_${baseName}.pdf`;
                 }
-
-                const contentType = currentFormat === 'pdf' ? 'application/pdf' : `image/${currentFormat === 'jpg' ? 'jpeg' : currentFormat}`;
 
                 attachments.push({
                     filename: filename,
                     content: fileBuffer,
-                    contentType: contentType
+                    contentType: 'application/pdf'
                 });
 
-                console.log(`✓ Generated ${currentFormat.toUpperCase()} attachment: ${filename} (${fileBuffer.length} bytes)`);
+                console.log(`✓ Generated PDF attachment: ${filename} (${fileBuffer.length} bytes)`);
             } catch (pdfErr) {
-                console.error(`Failed to generate attachment for ${emailField}:`, pdfErr);
-                results.errors.push({ email: emailField, error: 'Attachment Generation Failed: ' + pdfErr.message });
+                console.error(`Failed to generate PDF for ${emailField}:`, pdfErr);
+                results.errors.push({ email: emailField, error: 'PDF Generation Failed: ' + pdfErr.message });
                 // Continue without attachment
             }
         }
