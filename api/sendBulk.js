@@ -24,30 +24,36 @@ export default async (req, res) => {
         total: recipients.length,
         sent: 0,
         failed: 0,
-        errors: []
+        errors: [],
+        skipped: []
     };
 
     // Process in serial to respect rate limits (simple throttling)
-    // For production, this should be offloaded to a queue (e.g., Redis/Bull), 
-    // but for Vercel serverless (10s timeout), we must limit batch size or use external trigger.
-    // We'll assume small batches for this MVP.
-
     for (const recipient of recipients) {
-        if (!recipient.email) continue;
+        // Find email field (case-insensitive)
+        const emailField = recipient.email || recipient.Email || recipient.EMAIL ||
+            recipient['e-mail'] || recipient['E-mail'];
 
-        const subject = replaceTags(subjectTemplate || '', recipient);
+        if (!emailField || !emailField.includes('@')) {
+            console.log('Skipping invalid recipient (no email):', recipient);
+            results.skipped.push(recipient);
+            continue;
+        }
+
+        const subject = replaceTags(subjectTemplate || 'No Subject', recipient);
         const html = replaceTags(htmlTemplate || '', recipient);
         const text = replaceTags(textTemplate || '', recipient);
 
         try {
-            await sendMail({ to: recipient.email, subject, html, text, smtpConfig });
+            await sendMail({ to: emailField, subject, html, text, smtpConfig });
+            console.log(`✓ Email sent to ${emailField}`);
             results.sent++;
             // Throttle: 1 second delay between emails to avoid hitting Gmail burst limits
             await delay(1000);
         } catch (err) {
-            console.error(`Failed to send to ${recipient.email}:`, err.message);
+            console.error(`✗ Failed to send to ${emailField}:`, err.message);
             results.failed++;
-            results.errors.push({ email: recipient.email, error: err.message });
+            results.errors.push({ email: emailField, error: err.message });
         }
     }
 
