@@ -7,23 +7,13 @@ function replaceTags(template, data) {
 
 // Helper for delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-import { sendMail } from './utils/mailer.js';
-
-// Helper to replace {{tags}} in string
-function replaceTags(template, data) {
-    return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
-}
-
-// Helper for delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig, convertToPdf, pdfFilename } = req.body;
-    // recipients: [{ email: '...', name: '...', invoice: '...' }, ...]
+    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig } = req.body;
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
         return res.status(400).json({ error: 'Recipients list is required' });
@@ -37,23 +27,7 @@ export default async (req, res) => {
         skipped: []
     };
 
-    // Generate PDF once if needed
-    let pdfAttachment = null;
-    if (convertToPdf && htmlTemplate) {
-        try {
-            const { htmlToPdfBuffer } = await import('./utils/pdfConverter.js');
-            const pdfBuffer = await htmlToPdfBuffer(htmlTemplate, pdfFilename || 'Document');
-            pdfAttachment = {
-                filename: `${pdfFilename || 'document'}.pdf`,
-                content: pdfBuffer,
-                contentType: 'application/pdf'
-            };
-        } catch (err) {
-            return res.status(500).json({ error: 'Failed to generate PDF', details: err.message });
-        }
-    }
-
-    // Process in serial to respect rate limits (simple throttling)
+    // Process in serial to respect rate limits
     for (const recipient of recipients) {
         // Find email field (case-insensitive)
         const emailField = recipient.email || recipient.Email || recipient.EMAIL ||
@@ -69,15 +43,11 @@ export default async (req, res) => {
         const html = replaceTags(htmlTemplate || '', recipient);
         const text = replaceTags(textTemplate || '', recipient);
 
-        // Prepare attachments array
-        const attachments = pdfAttachment ? [pdfAttachment] : [];
-
         try {
-            await sendMail({ to: emailField, subject, html, text, smtpConfig, attachments });
-            console.log(`✓ Email sent to ${emailField}` + (pdfAttachment ? ' with PDF attachment' : ''));
+            await sendMail({ to: emailField, subject, html, text, smtpConfig });
+            console.log(`✓ Email sent to ${emailField}`);
             results.sent++;
-            // Throttle: 1 second delay between emails to avoid hitting Gmail burst limits
-            await delay(1000);
+            await delay(1000); // Throttle
         } catch (err) {
             console.error(`✗ Failed to send to ${emailField}:`, err.message);
             results.failed++;
