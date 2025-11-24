@@ -24,53 +24,27 @@ export function createTransporter(smtpConfig) {
         throw new Error('SMTP credentials not configured. Please configure in SMTP Config tab or set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.');
     }
 
-    import nodemailer from 'nodemailer';
+    return nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass },
+    });
+}
 
-    // Create transporter with provided config or fall back to env vars
-    export function createTransporter(smtpConfig) {
-        // If custom config provided, use it
-        if (smtpConfig && smtpConfig.provider === 'custom') {
-            return nodemailer.createTransport({
-                host: smtpConfig.host,
-                port: parseInt(smtpConfig.port) || 587,
-                secure: smtpConfig.port == 465,
-                auth: {
-                    user: smtpConfig.user,
-                    pass: smtpConfig.pass,
-                },
-                tls: smtpConfig.tls !== false
-            });
-        }
+export async function sendMail({ to, subject, html, text, smtpConfig, attachments }) {
+    const transporter = createTransporter(smtpConfig);
 
-        // Gmail config (from UI or env vars)
-        const user = smtpConfig?.user || process.env.GMAIL_USER;
-        const pass = smtpConfig?.pass || process.env.GMAIL_APP_PASSWORD;
+    const mailOptions = {
+        from: smtpConfig?.user || process.env.GMAIL_USER,
+        to,
+        subject,
+        text: text || '',
+        html: html || '',
+    };
 
-        if (!user || !pass) {
-            throw new Error('SMTP credentials not configured. Please configure in SMTP Config tab or set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.');
-        }
-
-        return nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user, pass },
-        });
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+        mailOptions.attachments = attachments;
     }
 
-    export async function sendMail({ to, subject, html, text, smtpConfig, attachments }) {
-        const transporter = createTransporter(smtpConfig);
-
-        const mailOptions = {
-            from: smtpConfig?.user || process.env.GMAIL_USER,
-            to,
-            subject,
-            text: text || '',
-            html: html || '',
-        };
-
-        // Add attachments if provided
-        if (attachments && attachments.length > 0) {
-            mailOptions.attachments = attachments;
-        }
-
-        return transporter.sendMail(mailOptions);
-    }
+    return transporter.sendMail(mailOptions);
+}
