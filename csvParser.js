@@ -1,10 +1,19 @@
-// csvParser.js – Parse CSV text into JSON array
+// csvParser.js – Parse CSV text or simple email list into JSON array
 
 export function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
+    const lines = csvText.trim().split('\n').filter(line => line.trim());
     if (lines.length === 0) return [];
 
-    // Extract headers
+    // Check if it's a simple email list (no commas, just emails)
+    const firstLine = lines[0].trim();
+    const isSimpleList = !firstLine.includes(',') && firstLine.includes('@');
+
+    if (isSimpleList) {
+        // Simple email list: one email per line
+        return lines.map(email => ({ email: email.trim() }));
+    }
+
+    // Proper CSV with headers
     const headers = lines[0].split(',').map(h => h.trim());
 
     // Parse rows
