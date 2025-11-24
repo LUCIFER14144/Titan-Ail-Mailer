@@ -1,0 +1,187 @@
+/* index.css – premium UI foundation */
+
+:root {
+  --primary-h: 210;
+  --primary-s: 70%;
+  --primary-l: 55%;
+  --bg-dark: #0a0a0a;
+  --bg-card: #161616;
+  --text-light: #ffffff;
+  --text-dim: #a0a0a0;
+  --border: #333;
+  --radius: 12px;
+  --transition: 0.3s ease;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 3rem;
+  gap: 1.5rem;
+}
+
+.logo {
+  font-size: 2rem;
+  color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  margin: 0;
+}
+
+/* Tabs */
+.nav-tabs {
+  display: flex;
+  gap: 1rem;
+  background: var(--bg-card);
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.nav-btn {
+  background: transparent;
+  color: var(--text-dim);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--transition);
+  font-weight: 500;
+}
+
+.nav-btn:hover {
+  color: var(--text-light);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-btn.active {
+  background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  color: var(--text-light);
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards & Forms */
+.card {
+  background: var(--bg-card);
+  padding: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.8rem;
+  background: #222;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  background: #2a2a2a;
+}
+
+small {
+  display: block;
+  margin-top: 0.4rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* Buttons */
+.cta-button {
+  background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  color: var(--text-light);
+  border: none;
+  padding: 0.8rem 1.6rem;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  width: 100%;
+  font-weight: 600;
+}
+
+.cta-button:hover {
+  background: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) - 5%));
+  transform: translateY(-2px);
+}
+
+/* Results */
+.result-box {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #111;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-height: 50px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  color: #ddd;
+  display: none; /* Hidden by default */
+}
+
+.result-box:not(:empty) {
+  display: block;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}

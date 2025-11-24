@@ -1,28 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Titan‑Ail‑Mailer</title>
+  <title>Titan‑Ail‑Mailer Dashboard</title>
   <link rel="stylesheet" href="/index.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
+
 <body>
   <div id="app" class="container">
     <header class="header">
       <h1 class="logo">Titan‑Ail‑Mailer</h1>
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="bulk">Bulk Sender</button>
+        <button class="nav-btn" data-tab="ai">AI Generator</button>
+        <button class="nav-btn" data-tab="spam">Spam Checker</button>
+      </nav>
     </header>
+
     <main class="main">
-      <section class="hero">
-        <h2>Send beautiful emails that land in the inbox</h2>
-        <p>Premium email marketing with high deliverability, sleek design, and powerful analytics.</p>
-        <button class="cta-button" onclick="location.href='https://example.com'">Get Started</button>
+      <!-- Bulk Sender Section -->
+      <section id="bulk" class="tab-content active">
+        <div class="card">
+          <h2>Bulk Email Campaign</h2>
+          <div class="form-group">
+            <label>Recipients (JSON format)</label>
+            <textarea id="recipientsInput"
+              placeholder='[{"email": "test@example.com", "name": "John"}, ...]'></textarea>
+            <small>Enter a list of objects with email and other tags.</small>
+          </div>
+          <div class="form-group">
+            <label>Subject Template</label>
+            <input type="text" id="subjectInput" placeholder="Hello {{name}}!" />
+          </div>
+          <div class="form-group">
+            <label>Email Body (HTML)</label>
+            <textarea id="htmlInput" placeholder="<p>Hi {{name}}, here is your invoice {{invoice}}...</p>"
+              rows="6"></textarea>
+          </div>
+          <button id="sendBulkBtn" class="cta-button">Send Campaign</button>
+          <div id="bulkResult" class="result-box"></div>
+        </div>
+      </section>
+
+      <!-- AI Generator Section -->
+      <section id="ai" class="tab-content">
+        <div class="card">
+          <h2>AI Content Generator</h2>
+          <div class="form-group">
+            <label>Topic / Keywords</label>
+            <input type="text" id="aiTopic" placeholder="e.g., Summer Sale, Welcome Email" />
+          </div>
+          <div class="form-group">
+            <label>Tone</label>
+            <select id="aiTone">
+              <option value="professional">Professional</option>
+              <option value="friendly">Friendly</option>
+              <option value="urgent">Urgent</option>
+              <option value="persuasive">Persuasive</option>
+            </select>
+          </div>
+          <button id="generateAiBtn" class="cta-button">Generate Content</button>
+          <div id="aiResult" class="result-box"></div>
+        </div>
+      </section>
+
+      <!-- Spam Checker Section -->
+      <section id="spam" class="tab-content">
+        <div class="card">
+          <h2>Spam Score Checker</h2>
+          <div class="form-group">
+            <label>Email Subject</label>
+            <input type="text" id="spamSubject" placeholder="Subject line..." />
+          </div>
+          <div class="form-group">
+            <label>Email Body</label>
+            <textarea id="spamBody" placeholder="Paste your email content here..." rows="6"></textarea>
+          </div>
+          <button id="checkSpamBtn" class="cta-button">Check Score</button>
+          <div id="spamResult" class="result-box"></div>
+        </div>
       </section>
     </main>
+
     <footer class="footer">
       <p>© 2025 Titan‑Ail‑Mailer. All rights reserved.</p>
     </footer>
   </div>
   <script type="module" src="/main.js"></script>
 </body>
+
 </html>
