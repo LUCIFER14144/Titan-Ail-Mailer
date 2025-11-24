@@ -39,6 +39,10 @@ sendBulkBtn.addEventListener('click', async () => {
     const subjectTemplate = document.getElementById('subjectInput').value;
     const htmlTemplate = document.getElementById('htmlInput').value;
 
+    // Get content from Converter tab for PDF attachment
+    const pdfHtmlTemplate = document.getElementById('converterHtml')?.value;
+    const pdfFilename = document.getElementById('converterFilename')?.value;
+
     if (!recipientsRaw) {
         return alert('Please provide recipients (CSV or text)');
     }
@@ -66,7 +70,9 @@ sendBulkBtn.addEventListener('click', async () => {
                 recipients,
                 subjectTemplate,
                 htmlTemplate,
-                smtpConfig
+                smtpConfig,
+                pdfHtmlTemplate, // Pass HTML from converter tab
+                pdfFilename      // Pass filename from converter tab
             })
         });
         const data = await res.json();

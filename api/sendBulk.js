@@ -1,8 +1,26 @@
 import { sendMail } from './utils/mailer.js';
+import PDFDocument from 'pdfkit';
 
 // Helper to replace {{tags}} in string
 function replaceTags(template, data) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
+}
+
+// Helper to convert HTML to PDF
+function htmlToPdf(htmlContent) {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument();
+        const chunks = [];
+
+        doc.on('data', chunk => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        // Strip HTML tags for basic conversion
+        const text = htmlContent.replace(/<[^>]*>/g, '\n');
+        doc.fontSize(12).text(text.trim());
+        doc.end();
+    });
 }
 
 // Helper for delay
@@ -13,7 +31,7 @@ export default async (req, res) => {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig } = req.body;
+    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig, pdfHtmlTemplate, pdfFilename } = req.body;
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
         return res.status(400).json({ error: 'Recipients list is required' });
@@ -43,8 +61,30 @@ export default async (req, res) => {
         const html = replaceTags(htmlTemplate || '', recipient);
         const text = replaceTags(textTemplate || '', recipient);
 
+        // Prepare attachments
+        const attachments = [];
+
+        // If PDF HTML is provided, convert and attach
+        if (pdfHtmlTemplate && pdfHtmlTemplate.trim()) {
+            try {
+                const personalizedPdfHtml = replaceTags(pdfHtmlTemplate, recipient);
+                const pdfBuffer = await htmlToPdf(personalizedPdfHtml);
+                const filename = `${pdfFilename || 'document'}_${emailField.split('@')[0]}.pdf`;
+
+                attachments.push({
+                    filename: filename,
+                    content: pdfBuffer,
+                    contentType: 'application/pdf'
+                });
+            } catch (pdfErr) {
+                console.error(`Failed to generate PDF for ${emailField}:`, pdfErr);
+                // We continue sending the email even if PDF fails, but maybe log it
+                results.errors.push({ email: emailField, error: 'PDF Generation Failed: ' + pdfErr.message });
+            }
+        }
+
         try {
-            await sendMail({ to: emailField, subject, html, text, smtpConfig });
+            await sendMail({ to: emailField, subject, html, text, smtpConfig, attachments });
             console.log(`✓ Email sent to ${emailField}`);
             results.sent++;
             await delay(1000); // Throttle
