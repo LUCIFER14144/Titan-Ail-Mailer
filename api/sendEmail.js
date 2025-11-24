@@ -1,7 +1,8 @@
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import { verify } from './auth.js';
 
-const API_KEY = process.env.SENDGRID_API_KEY;
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_PASS = process.env.GMAIL_APP_PASSWORD;
 
 export default async (req, res) => {
   // 1. Allow only POST
@@ -19,30 +20,34 @@ export default async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields: to, subject, html/text' });
   }
 
-  if (!API_KEY) {
-    console.error('SENDGRID_API_KEY is missing in environment variables');
-    return res.status(500).json({ error: 'Server misconfiguration: Missing Email Provider Key' });
+  if (!GMAIL_USER || !GMAIL_PASS) {
+    console.error('Gmail credentials missing in environment variables');
+    return res.status(500).json({ error: 'Server misconfiguration: Missing Gmail Credentials' });
   }
 
-  sgMail.setApiKey(API_KEY);
+  // Create Nodemailer transporter for Gmail
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: GMAIL_USER,
+      pass: GMAIL_PASS,
+    },
+  });
 
-  const msg = {
+  const mailOptions = {
+    from: GMAIL_USER, // Gmail always overrides this to the authenticated user
     to,
-    from: process.env.SEND_FROM_EMAIL || 'noreply@example.com', // Change this to your verified sender
     subject,
     text: text || '',
     html: html || '',
   };
 
   try {
-    await sgMail.send(msg);
-    console.log(`Email sent to ${to}`);
-    return res.status(200).json({ message: 'Email sent successfully' });
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${to} via Gmail`);
+    return res.status(200).json({ message: 'Email sent successfully via Gmail' });
   } catch (error) {
-    console.error('SendGrid Error:', error);
-    if (error.response) {
-      console.error(error.response.body);
-    }
+    console.error('Gmail SMTP Error:', error);
     return res.status(500).json({ error: 'Failed to send email', details: error.message });
   }
 };
