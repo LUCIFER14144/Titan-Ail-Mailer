@@ -59,10 +59,6 @@ sendBulkBtn.addEventListener('click', async () => {
         const smtpConfigRaw = localStorage.getItem('smtpConfig');
         const smtpConfig = smtpConfigRaw ? JSON.parse(smtpConfigRaw) : null;
 
-        // Check if user wants to convert HTML to PDF
-        const convertToPdf = document.getElementById('convertToPdf')?.checked || false;
-        const pdfFilename = document.getElementById('pdfFilename')?.value || 'document';
-
         const res = await fetch('/api/sendBulk', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -70,9 +66,7 @@ sendBulkBtn.addEventListener('click', async () => {
                 recipients,
                 subjectTemplate,
                 htmlTemplate,
-                smtpConfig,
-                convertToPdf,
-                pdfFilename
+                smtpConfig
             })
         });
         const data = await res.json();
