@@ -195,3 +195,37 @@ refreshStatsBtn.addEventListener('click', loadAnalytics);
 
 // Load analytics on page load
 loadAnalytics();
+
+// --- HTML Converter Logic ---
+const convertBtn = document.getElementById('convertBtn');
+convertBtn?.addEventListener('click', async () => {
+    const html = document.getElementById('converterHtml').value;
+    const format = document.getElementById('outputFormat').value;
+    const filename = document.getElementById('converterFilename').value || 'document';
+    const email = document.getElementById('converterEmail').value;
+
+    if (!html) return alert('Please enter HTML content');
+    if (!email) return alert('Please enter recipient email address');
+
+    convertBtn.textContent = 'Converting & Sending...';
+    convertBtn.disabled = true;
+
+    try {
+        const smtpConfigRaw = localStorage.getItem('smtpConfig');
+        const smtpConfig = smtpConfigRaw ? JSON.parse(smtpConfigRaw) : null;
+
+        const res = await fetch('/api/convertAndSend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html, format, filename, email, smtpConfig })
+        });
+
+        const data = await res.json();
+        showResult('converterResult', data, !res.ok);
+    } catch (err) {
+        showResult('converterResult', 'Error: ' + err.message, true);
+    } finally {
+        convertBtn.textContent = 'Convert & Email';
+        convertBtn.disabled = false;
+    }
+});
