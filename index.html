@@ -45,55 +45,74 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           </div>
 
           <div class="form-group">
-            <div class="card">
-              <h2>SMTP Configuration</h2>
-              <div class="form-group">
-                <label>SMTP Provider</label>
-                <select id="smtpProvider">
-                  <option value="gmail">Gmail (App Password)</option>
-                  <option value="custom">Custom SMTP Server</option>
-                </select>
-              </div>
+            <label>Email Body (HTML)</label>
+            <textarea id="htmlInput"
+              placeholder="<p>Hi {{name}},</p><p>Your invoice #{{invoice}} for {{amount}} is ready.</p>"
+              rows="8"></textarea>
+          </div>
 
-              <div id="gmailConfig">
-                <div class="form-group">
-                  <label>Gmail Address</label>
-                  <input type="email" id="gmailUser" placeholder="you@gmail.com" />
-                </div>
-                <div class="form-group">
-                  <label>App Password</label>
-                  <input type="password" id="gmailPass" placeholder="16-character app password" />
-                  <small>Generate at: <a href="https://myaccount.google.com/apppasswords" target="_blank">Google App
-                      Passwords</a></small>
-                </div>
-              </div>
+          <div class="form-group">
+            <label>Attachments (optional)</label>
+            <input type="file" id="attachmentFile" multiple />
+            <small>Upload PDF, images, or other files to attach</small>
+          </div>
 
-              <div id="customConfig" style="display:none;">
-                <div class="form-group">
-                  <label>SMTP Host</label>
-                  <input type="text" id="smtpHost" placeholder="smtp.yourserver.com" />
-                </div>
-                <div class="form-group">
-                  <label>SMTP Port</label>
-                  <input type="number" id="smtpPort" placeholder="587" value="587" />
-                </div>
-                <div class="form-group">
-                  <label>Username</label>
-                  <input type="text" id="smtpUser" />
-                </div>
-                <div class="form-group">
-                  <label>Password</label>
-                  <input type="password" id="smtpPassword" />
-                </div>
-                <div class="form-group">
-                  <label>Use TLS</label>
-                  <input type="checkbox" id="smtpTLS" checked />
-                </div>
-              </div>
+          <button id="sendBulkBtn" class="cta-button">Send Campaign</button>
+          <div id="bulkResult" class="result-box"></div>
+        </div>
+      </section>
 
-              <button id="saveSmtpBtn" class="cta-button">Save Configuration</button>
-              <div id="smtpResult" class="result-box"></div>
+      <!-- SMTP Config Section -->
+      <section id="smtp" class="tab-content">
+        <div class="card">
+          <h2>SMTP Configuration</h2>
+          <div class="form-group">
+            <label>SMTP Provider</label>
+            <select id="smtpProvider">
+              <option value="gmail">Gmail (App Password)</option>
+              <option value="custom">Custom SMTP Server</option>
+            </select>
+          </div>
+
+          <div id="gmailConfig">
+            <div class="form-group">
+              <label>Gmail Address</label>
+              <input type="email" id="gmailUser" placeholder="you@gmail.com" />
             </div>
+            <div class="form-group">
+              <label>App Password</label>
+              <input type="password" id="gmailPass" placeholder="16-character app password" />
+              <small>Generate at: <a href="https://myaccount.google.com/apppasswords" target="_blank">Google App
+                  Passwords</a></small>
+            </div>
+          </div>
+
+          <div id="customConfig" style="display:none;">
+            <div class="form-group">
+              <label>SMTP Host</label>
+              <input type="text" id="smtpHost" placeholder="smtp.yourserver.com" />
+            </div>
+            <div class="form-group">
+              <label>SMTP Port</label>
+              <input type="number" id="smtpPort" placeholder="587" value="587" />
+            </div>
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="smtpUser" />
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="smtpPassword" />
+            </div>
+            <div class="form-group">
+              <label>Use TLS</label>
+              <input type="checkbox" id="smtpTLS" checked />
+            </div>
+          </div>
+
+          <button id="saveSmtpBtn" class="cta-button">Save Configuration</button>
+          <div id="smtpResult" class="result-box"></div>
+        </div>
       </section>
 
       <!-- AI Generator Section -->
@@ -133,41 +152,35 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           <button id="checkSpamBtn" class="cta-button">Check Score</button>
           <div id="spamResult" class="result-box"></div>
         </div>
-      </section><!-- HTML Converter Section -->
-<section id="converter" class="tab-content">
-    <div class="card">
-        <h2>HTML to File Converter</h2>
-
-        <div class="form-group">
+      </section>      <!-- HTML Converter Section -->
+      <section id="converter" class="tab-content">
+        <div class="card">
+          <h2>HTML to File Converter</h2>
+          <div class="form-group">
             <label>HTML Content</label>
             <textarea id="converterHtml" placeholder="<h1>My Document</h1><p>Content here...</p>" rows="10"></textarea>
-        </div>
-
-        <div class="form-group">
+          </div>
+          <div class="form-group">
             <label>Output Format</label>
             <select id="outputFormat">
-                <option value="pdf">PDF</option>
-                <option value="png">PNG Image (Not Available Yet)</option>
-                <option value="jpg">JPG Image (Not Available Yet)</option>
+              <option value="pdf">PDF</option>
             </select>
-            <small>PNG/JPG require puppeteer library. PDF works now!</small>
-        </div>
-
-        <div class="form-group">
+            <small>PDF conversion available. PNG/JPG require additional libraries.</small>
+          </div>
+          <div class="form-group">
             <label>Filename</label>
             <input type="text" id="converterFilename" placeholder="document" />
-        </div>
-
-        <div class="form-group">
+          </div>
+          <div class="form-group">
             <label>Send To Email</label>
             <input type="email" id="converterEmail" placeholder="recipient@example.com" />
             <small>Converted file will be sent as email attachment</small>
+          </div>
+          <button id="convertBtn" class="cta-button">Convert & Email</button>
+          <div id="converterResult" class="result-box"></div>
         </div>
+      </section>
 
-        <button id="convertBtn" class="cta-button">Convert & Email</button>
-        <div id="converterResult" class="result-box"></div>
-    </div>
-</section>
 
       <!-- Analytics Section -->
       <section id="analytics" class="tab-content">
