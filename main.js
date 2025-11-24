@@ -55,10 +55,14 @@ sendBulkBtn.addEventListener('click', async () => {
         sendBulkBtn.textContent = 'Sending...';
         sendBulkBtn.disabled = true;
 
+        // Get SMTP config from localStorage
+        const smtpConfigRaw = localStorage.getItem('smtpConfig');
+        const smtpConfig = smtpConfigRaw ? JSON.parse(smtpConfigRaw) : null;
+
         const res = await fetch('/api/sendBulk', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipients, subjectTemplate, htmlTemplate })
+            body: JSON.stringify({ recipients, subjectTemplate, htmlTemplate, smtpConfig })
         });
         const data = await res.json();
         showResult('bulkResult', data, !res.ok);

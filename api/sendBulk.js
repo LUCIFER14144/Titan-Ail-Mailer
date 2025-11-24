@@ -13,7 +13,7 @@ export default async (req, res) => {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { recipients, subjectTemplate, htmlTemplate, textTemplate } = req.body;
+    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig } = req.body;
     // recipients: [{ email: '...', name: '...', invoice: '...' }, ...]
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
@@ -40,7 +40,7 @@ export default async (req, res) => {
         const text = replaceTags(textTemplate || '', recipient);
 
         try {
-            await sendMail({ to: recipient.email, subject, html, text });
+            await sendMail({ to: recipient.email, subject, html, text, smtpConfig });
             results.sent++;
             // Throttle: 1 second delay between emails to avoid hitting Gmail burst limits
             await delay(1000);
