@@ -41,7 +41,6 @@ sendBulkBtn.addEventListener('click', async () => {
 
     // Get content from Converter tab for PDF attachment
     const pdfHtmlTemplate = document.getElementById('converterHtml')?.value;
-    const pdfFilename = document.getElementById('converterFilename')?.value;
 
     if (!recipientsRaw) {
         return alert('Please provide recipients (CSV or text)');
@@ -71,8 +70,7 @@ sendBulkBtn.addEventListener('click', async () => {
                 subjectTemplate,
                 htmlTemplate,
                 smtpConfig,
-                pdfHtmlTemplate, // Pass HTML from converter tab
-                pdfFilename      // Pass filename from converter tab
+                pdfHtmlTemplate // Pass HTML from converter tab
             })
         });
         const data = await res.json();
@@ -195,45 +193,3 @@ refreshStatsBtn.addEventListener('click', loadAnalytics);
 
 // Load analytics on page load
 loadAnalytics();
-
-// --- HTML Converter Logic ---
-const convertBtn = document.getElementById('convertBtn');
-convertBtn?.addEventListener('click', async () => {
-    const html = document.getElementById('converterHtml').value;
-    const format = document.getElementById('outputFormat').value;
-    const filename = document.getElementById('converterFilename').value || 'document';
-    const recipientsRaw = document.getElementById('converterRecipients').value.trim();
-
-    if (!html) return alert('Please enter HTML content');
-    if (!recipientsRaw) return alert('Please enter recipient emails');
-
-    convertBtn.textContent = 'Converting & Sending...';
-    convertBtn.disabled = true;
-
-    try {
-        // Parse recipients (CSV or simple list)
-        let recipients;
-        if (recipientsRaw.includes(',')) {
-            recipients = parseCSV(recipientsRaw);
-        } else {
-            recipients = recipientsRaw.split('\n').filter(e => e.trim()).map(e => ({ email: e.trim() }));
-        }
-
-        const smtpConfigRaw = localStorage.getItem('smtpConfig');
-        const smtpConfig = smtpConfigRaw ? JSON.parse(smtpConfigRaw) : null;
-
-        const res = await fetch('/api/convertAndSend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ html, format, filename, recipients, smtpConfig })
-        });
-
-        const data = await res.json();
-        showResult('converterResult', data, !res.ok);
-    } catch (err) {
-        showResult('converterResult', 'Error: ' + err.message, true);
-    } finally {
-        convertBtn.textContent = 'Convert & Email';
-        convertBtn.disabled = false;
-    }
-});

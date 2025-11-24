@@ -31,7 +31,7 @@ export default async (req, res) => {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig, pdfHtmlTemplate, pdfFilename } = req.body;
+    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig, pdfHtmlTemplate } = req.body;
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
         return res.status(400).json({ error: 'Recipients list is required' });
@@ -69,7 +69,16 @@ export default async (req, res) => {
             try {
                 const personalizedPdfHtml = replaceTags(pdfHtmlTemplate, recipient);
                 const pdfBuffer = await htmlToPdf(personalizedPdfHtml);
-                const filename = `${pdfFilename || 'document'}_${emailField.split('@')[0]}.pdf`;
+
+                // Auto-generate filename: Invoice_{invoice}.pdf or Document_{email}.pdf
+                let filename;
+                if (recipient.invoice) {
+                    filename = `Invoice_${recipient.invoice}.pdf`;
+                } else if (recipient.Invoice) {
+                    filename = `Invoice_${recipient.Invoice}.pdf`;
+                } else {
+                    filename = `Document_${emailField.split('@')[0]}.pdf`;
+                }
 
                 attachments.push({
                     filename: filename,
@@ -78,7 +87,6 @@ export default async (req, res) => {
                 });
             } catch (pdfErr) {
                 console.error(`Failed to generate PDF for ${emailField}:`, pdfErr);
-                // We continue sending the email even if PDF fails, but maybe log it
                 results.errors.push({ email: emailField, error: 'PDF Generation Failed: ' + pdfErr.message });
             }
         }

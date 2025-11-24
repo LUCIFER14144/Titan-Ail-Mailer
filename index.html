@@ -149,66 +149,27 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           <div class="form-group">
             <label>Email Body</label>
             <textarea id="spamBody" placeholder="Paste your email content here..." rows="6"></textarea>
-          </div>
-          <button id="checkSpamBtn" class="cta-button">Check Score</button>
-          <div id="spamResult" class="result-box"></div>
-        </div>
-      </section> <!-- HTML Converter Section -->
-      <section id="converter" class="tab-content">
-        <div class="card">
-          <h2>HTML to File Converter</h2>
-          <div class="form-group">
-            <label>HTML Content</label>
-            <textarea id="converterHtml" placeholder="<h1>My Document</h1><p>Content here...</p>" rows="10"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Output Format</label>
-            <select id="outputFormat">
-              <option value="pdf">PDF</option>
-            </select>
-            <small>PDF conversion available. PNG/JPG require additional libraries.</small>
-          </div>
-          <div class="form-group">
-            <label>Filename</label>
-            <input type="text" id="converterFilename" placeholder="document" />
-          </div>
-          <div class="form-group">
-            <label>Recipients (CSV or email list)</label>
-            <textarea id="converterRecipients" placeholder="email,name
-john@example.com,John
-jane@example.com,Jane" rows="4"></textarea>
-            <small>Enter email addresses (one per line) or CSV format with tags</small>
-          </div>
-          <button id="convertBtn" class="cta-button">Convert & Email</button>
-          <div id="converterResult" class="result-box"></div>
-        </div>
-      </section>
-
-
-      <!-- Analytics Section -->
-      <section id="analytics" class="tab-content">
-        <div class="card">
-          <h2>Email Analytics</h2>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <h3>Sent Today</h3>
-              <p id="statSentToday" class="stat-number">0</p>
+            <h2>Email Analytics</h2>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <h3>Sent Today</h3>
+                <p id="statSentToday" class="stat-number">0</p>
+              </div>
+              <div class="stat-card">
+                <h3>Failed</h3>
+                <p id="statFailed" class="stat-number">0</p>
+              </div>
+              <div class="stat-card">
+                <h3>Rate Limit</h3>
+                <p id="statRateLimit" class="stat-number">50/hr</p>
+              </div>
+              <div class="stat-card">
+                <h3>Daily Limit</h3>
+                <p id="statDailyLimit" class="stat-number">500/day</p>
+              </div>
             </div>
-            <div class="stat-card">
-              <h3>Failed</h3>
-              <p id="statFailed" class="stat-number">0</p>
-            </div>
-            <div class="stat-card">
-              <h3>Rate Limit</h3>
-              <p id="statRateLimit" class="stat-number">50/hr</p>
-            </div>
-            <div class="stat-card">
-              <h3>Daily Limit</h3>
-              <p id="statDailyLimit" class="stat-number">500/day</p>
-            </div>
+            <button id="refreshStatsBtn" class="cta-button">Refresh Stats</button>
           </div>
-          <button id="refreshStatsBtn" class="cta-button">Refresh Stats</button>
-        </div>
       </section>
     </main>
 
