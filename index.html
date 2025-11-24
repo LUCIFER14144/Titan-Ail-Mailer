@@ -52,6 +52,10 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           </div>
 
           <div class="form-group">
+            <label>Upload HTML Template (for PDF Attachment)</label>
+            <input type="file" id="htmlTemplateFile" accept=".html" />
+            <small>Upload an .html file. It will be converted to PDF and attached to each email. Tags like {{invoice}}
+              work!</small>
           </div>
 
           <button id="sendBulkBtn" class="cta-button">Send Campaign</button>
