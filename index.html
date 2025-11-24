@@ -12,134 +12,66 @@
 <body>
   <div id="app" class="container">
     <header class="header">
-      <h1 class="logo">Titan‑Ail‑Mailer</h1>
-      <nav class="nav-tabs">
-        <button class="nav-btn active" data-tab="bulk">Bulk Sender</button>
-        <button class="nav-btn" data-tab="smtp">SMTP Config</button>
-        <button class="nav-btn" data-tab="ai">AI Generator</button>
-        <button class="nav-btn" data-tab="spam">Spam Checker</button>
-        <button class="nav-btn" data-tab="converter">HTML Converter</button>`r`n <button class="nav-btn"
-          data-tab="analytics">Analytics</button>
-      </nav>
-    </header>
+      <div class="card">
+        <h2>Bulk Email Campaign</h2>
 
-    <main class="main">
-      <!-- Bulk Sender Section -->
-      <section id="bulk" class="tab-content active">
-        <div class="card">
-          <h2>Bulk Email Campaign</h2>
-
-          <div class="form-group">
-            <label>Upload Recipients (CSV or paste text)</label>
-            <input type="file" id="csvFile" accept=".csv,.txt" />
-            <small>OR paste CSV/plain text below (format: email,name,company...)</small>
-            <textarea id="recipientsInput" placeholder="email,name,company
+        <div class="form-group">
+          <label>Upload Recipients (CSV or paste text)</label>
+          <input type="file" id="csvFile" accept=".csv,.txt" />
+          <small>OR paste CSV/plain text below (format: email,name,company...)</small>
+          <textarea id="recipientsInput" placeholder="email,name,company
 john@example.com,John Doe,Acme Inc
 jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Subject Template (use {{tags}})</label>
-            <input type="text" id="subjectInput" placeholder="Hello {{name}} from {{company}}!" />
-            <small>Available tags: {{email}}, {{name}}, {{company}}, {{phone}}, {{address}}, {{city}}, {{date}},
-              {{time}}, {{invoice}}, {{amount}}, {{custom1}}, {{custom2}}</small>
-          </div>
-
-          <div class="form-group">
-            <label>Email Body (HTML)</label>
-            <textarea id="htmlInput"
-              placeholder="<p>Hi {{name}},</p><p>Your invoice #{{invoice}} for {{amount}} is ready.</p>"
-              rows="8"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Attachments (optional)</label>
-            <input type="file" id="attachmentFile" multiple />
-            <small>Upload PDF, images, or other files to attach</small>
-          </div>
-
-          <button id="sendBulkBtn" class="cta-button">Send Campaign</button>
-          <div id="bulkResult" class="result-box"></div>
         </div>
-      </section>
 
-      <!-- SMTP Config Section -->
-      <section id="smtp" class="tab-content">
-        <div class="card">
-          <h2>SMTP Configuration</h2>
-          <div class="form-group">
-            <label>SMTP Provider</label>
-            <select id="smtpProvider">
-              <option value="gmail">Gmail (App Password)</option>
-              <option value="custom">Custom SMTP Server</option>
-            </select>
-          </div>
-
-          <div id="gmailConfig">
-            <div class="form-group">
-              <label>Gmail Address</label>
-              <input type="email" id="gmailUser" placeholder="you@gmail.com" />
-            </div>
-            <div class="form-group">
-              <label>App Password</label>
-              <input type="password" id="gmailPass" placeholder="16-character app password" />
-              <small>Generate at: <a href="https://myaccount.google.com/apppasswords" target="_blank">Google App
-                  Passwords</a></small>
-            </div>
-          </div>
-
-          <div id="customConfig" style="display:none;">
-            <div class="form-group">
-              <label>SMTP Host</label>
-              <input type="text" id="smtpHost" placeholder="smtp.yourserver.com" />
-            </div>
-            <div class="form-group">
-              <label>SMTP Port</label>
-              <input type="number" id="smtpPort" placeholder="587" value="587" />
-            </div>
-            <div class="form-group">
-              <label>Username</label>
-              <input type="text" id="smtpUser" />
-            </div>
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="smtpPassword" />
-            </div>
-            <div class="form-group">
-              <label>Use TLS</label>
-              <input type="checkbox" id="smtpTLS" checked />
-            </div>
-          </div>
-
-          <button id="saveSmtpBtn" class="cta-button">Save Configuration</button>
-          <div id="smtpResult" class="result-box"></div>
+        <div class="form-group">
+          <label>Subject Template (use {{tags}})</label>
+          <input type="text" id="subjectInput" placeholder="Hello {{name}} from {{company}}!" />
+          <small>Available tags: {{email}}, {{name}}, {{company}}, {{phone}}, {{address}}, {{city}}, {{date}},
+            {{time}}, {{invoice}}, {{amount}}, {{custom1}}, {{custom2}}</small>
         </div>
-      </section>
 
-      <!-- AI Generator Section -->
-      <section id="ai" class="tab-content">
-        <div class="card">
-          <h2>AI Content Generator</h2>
-          <div class="form-group">
-            <label>Topic / Keywords</label>
-            <input type="text" id="aiTopic" placeholder="e.g., Summer Sale, Welcome Email" />
-          </div>
-          <div class="form-group">
-            <label>Tone</label>
-            <select id="aiTone">
-              <option value="professional">Professional</option>
-              <option value="friendly">Friendly</option>
-              <option value="urgent">Urgent</option>
-              <option value="persuasive">Persuasive</option>
-            </select>
-          </div>
-          <button id="generateAiBtn" class="cta-button">Generate Content</button>
-          <div id="aiResult" class="result-box"></div>
+        <div class="form-group">
+          <option value="gmail">Gmail (App Password)</option>
+          <option value="custom">Custom SMTP Server</option>
+          </select>
         </div>
-      </section>
 
-      <!-- Spam Checker Section -->
-      <section id="spam" class="tab-content">
+        <div id="gmailConfig">
+          <div class="form-group">
+            <label>Gmail Address</label>
+            <input type="email" id="gmailUser" placeholder="you@gmail.com" />
+          </div>
+          <div class="form-group">
+            <label>App Password</label>
+            <input type="password" id="gmailPass" placeholder="16-character app password" />
+            <small>Generate at: <a href="https://myaccount.google.com/apppasswords" target="_blank">Google App
+                Passwords</a></small>
+          </div>
+        </div>
+
+        <div id="customConfig" style="display:none;">
+          <div class="form-group">
+            <label>SMTP Host</label>
+            <input type="text" id="smtpHost" placeholder="smtp.yourserver.com" />
+          </div>
+          <div class="form-group">
+            <label>SMTP Port</label>
+            <input type="number" id="smtpPort" placeholder="587" value="587" />
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="smtpUser" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="smtpPassword" />
+          </div>
+          <div class="form-group">
+            <label>Use TLS</label>
+            <input type="checkbox" id="smtpTLS" checked />
+          </div>
+        </div>
         <div class="card">
           <h2>Spam Score Checker</h2>
           <h3>Failed</h3>
@@ -153,8 +85,8 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           <h3>Daily Limit</h3>
           <p id="statDailyLimit" class="stat-number">500/day</p>
         </div>
-  </div>
-  <button id="refreshStatsBtn" class="cta-button">Refresh Stats</button>
+      </div>
+      <button id="refreshStatsBtn" class="cta-button">Refresh Stats</button>
   </div>
   </section>
   </main>

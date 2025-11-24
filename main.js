@@ -32,15 +32,22 @@ csvFileInput.addEventListener('change', async (e) => {
     document.getElementById('recipientsInput').value = text;
 });
 
+// --- HTML Template File Upload Handler ---
+let pdfHtmlTemplateContent = '';
+const htmlTemplateInput = document.getElementById('htmlTemplateFile');
+htmlTemplateInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    pdfHtmlTemplateContent = await file.text();
+    console.log('HTML Template loaded:', file.name);
+});
+
 // --- Bulk Sender Logic ---
 const sendBulkBtn = document.getElementById('sendBulkBtn');
 sendBulkBtn.addEventListener('click', async () => {
     const recipientsRaw = document.getElementById('recipientsInput').value.trim();
     const subjectTemplate = document.getElementById('subjectInput').value;
     const htmlTemplate = document.getElementById('htmlInput').value;
-
-    // Get content from Converter tab for PDF attachment
-    const pdfHtmlTemplate = document.getElementById('converterHtml')?.value;
 
     if (!recipientsRaw) {
         return alert('Please provide recipients (CSV or text)');
@@ -70,7 +77,7 @@ sendBulkBtn.addEventListener('click', async () => {
                 subjectTemplate,
                 htmlTemplate,
                 smtpConfig,
-                pdfHtmlTemplate // Pass HTML from converter tab
+                pdfHtmlTemplate: pdfHtmlTemplateContent // Pass loaded HTML file content
             })
         });
         const data = await res.json();
