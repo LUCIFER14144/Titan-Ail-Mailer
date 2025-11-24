@@ -18,7 +18,8 @@
         <button class="nav-btn" data-tab="smtp">SMTP Config</button>
         <button class="nav-btn" data-tab="ai">AI Generator</button>
         <button class="nav-btn" data-tab="spam">Spam Checker</button>
-        <button class="nav-btn" data-tab="converter">HTML Converter</button>`r`n        <button class="nav-btn" data-tab="analytics">Analytics</button>
+        <button class="nav-btn" data-tab="converter">HTML Converter</button>`r`n <button class="nav-btn"
+          data-tab="analytics">Analytics</button>
       </nav>
     </header>
 
@@ -152,7 +153,7 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
           <button id="checkSpamBtn" class="cta-button">Check Score</button>
           <div id="spamResult" class="result-box"></div>
         </div>
-      </section>      <!-- HTML Converter Section -->
+      </section> <!-- HTML Converter Section -->
       <section id="converter" class="tab-content">
         <div class="card">
           <h2>HTML to File Converter</h2>
@@ -172,8 +173,11 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
             <input type="text" id="converterFilename" placeholder="document" />
           </div>
           <div class="form-group">
-            <label>Recipients (CSV or email list)</label>`r`n            <textarea id="converterRecipients" placeholder="email,name`r`njohn@example.com,John`r`njane@example.com,Jane" rows="4"></textarea>
-            <small>Converted file will be sent as email attachment</small>
+            <label>Recipients (CSV or email list)</label>
+            <textarea id="converterRecipients" placeholder="email,name
+john@example.com,John
+jane@example.com,Jane" rows="4"></textarea>
+            <small>Enter email addresses (one per line) or CSV format with tags</small>
           </div>
           <button id="convertBtn" class="cta-button">Convert & Email</button>
           <div id="converterResult" class="result-box"></div>
@@ -216,5 +220,3 @@ jane@example.com,Jane Smith,Beta Corp" rows="4"></textarea>
 </body>
 
 </html>
-
-
