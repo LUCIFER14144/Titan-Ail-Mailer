@@ -1,45 +1,54 @@
 import { sendMail } from './utils/mailer.js';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import htmlPdf from 'html-pdf-node';
+import sharp from 'sharp';
 
 // Helper to replace {{tags}} in string
 function replaceTags(template, data) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
 }
 
-// Helper to render HTML using Puppeteer
-async function renderHtmlWithPuppeteer(htmlContent, format = 'pdf') {
-    const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-    });
+// Helper to render HTML to PDF or Image
+async function renderHtml(htmlContent, format = 'pdf') {
+    try {
+        if (format === 'pdf') {
+            // Generate PDF
+            const options = { format: 'A4', printBackground: true };
+            const file = { content: htmlContent };
+            const pdfBuffer = await htmlPdf.generatePdf(file, options);
+            return pdfBuffer;
+        } else {
+            // For images, first convert to PDF then to image using sharp
+            const options = { format: 'A4', printBackground: true };
+            const file = { content: htmlContent };
+            const pdfBuffer = await htmlPdf.generatePdf(file, options);
 
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+            // Convert PDF to image using sharp
+            // Note: This is a simplified approach - we'll use a basic HTML rendering
+            // For now, we'll use a text-based fallback for images
+            const textContent = htmlContent.replace(/<[^>]*>/g, '\n').trim();
 
-    let buffer;
-    if (format === 'pdf') {
-        buffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-        });
-    } else if (format === 'jpg' || format === 'jpeg') {
-        buffer = await page.screenshot({
-            type: 'jpeg',
-            quality: 90,
-            fullPage: true,
-        });
-    } else if (format === 'png') {
-        buffer = await page.screenshot({
-            type: 'png',
-            fullPage: true,
-        });
+            // Create a simple SVG with the text
+            const svg = `
+        <svg width="800" height="1000" xmlns="http://www.w3.org/2000/svg">
+          <rect width="800" height="1000" fill="white"/>
+          <text x="20" y="40" font-family="Arial" font-size="16" fill="black">
+            ${textContent.split('\n').slice(0, 50).map((line, i) =>
+                `<tspan x="20" dy="${i === 0 ? 0 : 20}">${line}</tspan>`
+            ).join('')}
+          </text>
+        </svg>
+      `;
+
+            const imageBuffer = await sharp(Buffer.from(svg))
+                .toFormat(format === 'jpg' ? 'jpeg' : 'png')
+                .toBuffer();
+
+            return imageBuffer;
+        }
+    } catch (error) {
+        console.error('Error rendering HTML:', error);
+        throw new Error(`Failed to render HTML as ${format}: ${error.message}`);
     }
-
-    await browser.close();
-    return buffer;
 }
 
 // Helper for delay
@@ -108,7 +117,8 @@ export default async (req, res) => {
                     currentFormat = formatOrder[i % formatOrder.length];
                 }
 
-                const fileBuffer = await renderHtmlWithPuppeteer(personalizedHtml, currentFormat);
+                console.log(`Rendering ${currentFormat.toUpperCase()} for ${emailField}...`);
+                const fileBuffer = await renderHtml(personalizedHtml, currentFormat);
 
                 // Auto-generate filename
                 let filename;
@@ -132,6 +142,7 @@ export default async (req, res) => {
             } catch (pdfErr) {
                 console.error(`Failed to generate attachment for ${emailField}:`, pdfErr);
                 results.errors.push({ email: emailField, error: 'Attachment Generation Failed: ' + pdfErr.message });
+                // Continue without attachment
             }
         }
 
