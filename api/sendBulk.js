@@ -2,48 +2,160 @@ import { sendMail } from './utils/mailer.js';
 import PDFDocument from 'pdfkit';
 
 // Helper to replace {{tags}} in string
-const doc = new PDFDocument({
-    size: 'A4',
-    margins: { top: 50, bottom: 50, left: 50, right: 50 }
-});
-const chunks = [];
+function replaceTags(template, data) {
+    return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
+}
 
-doc.on('data', chunk => chunks.push(chunk));
-doc.on('end', () => resolve(Buffer.concat(chunks)));
-doc.on('error', reject);
+// Simple HTML parser that extracts text with basic formatting
+function parseHtmlSimple(html) {
+    const elements = [];
 
-// Parse HTML
-const elements = parseHtmlSimple(htmlContent);
+    // Replace HTML entities
+    html = html.replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"');
 
-// Render elements
-for (const element of elements) {
-    if (element.type === 'h1') {
-        doc.fontSize(24).font('Helvetica-Bold').text(element.content, { lineGap: 10 });
-        doc.moveDown(0.5);
-    } else if (element.type === 'h2') {
-        doc.fontSize(20).font('Helvetica-Bold').text(element.content, { lineGap: 8 });
-        doc.moveDown(0.3);
-    } else if (element.type === 'h3') {
-        doc.fontSize(16).font('Helvetica-Bold').text(element.content, { lineGap: 6 });
-        doc.moveDown(0.3);
-    } else if (element.type === 'p') {
-        doc.fontSize(12).font('Helvetica').text(element.content, { lineGap: 4, align: 'left' });
-        doc.moveDown(0.5);
-    } else if (element.type === 'bold') {
-        doc.fontSize(12).font('Helvetica-Bold').text(element.content, { continued: false });
-    } else if (element.type === 'italic') {
-        doc.fontSize(12).font('Helvetica-Oblique').text(element.content, { continued: false });
-    } else if (element.type === 'text') {
-        doc.fontSize(12).font('Helvetica').text(element.content, { continued: false });
-    } else if (element.type === 'break') {
-        doc.moveDown(0.2);
+    // Process tags sequentially
+    let position = 0;
+
+    while (position < html.length) {
+        // Find next opening tag
+        const tagStart = html.indexOf('<', position);
+
+        // If no more tags,add remaining text
+        if (tagStart === -1) {
+            const remainingText = html.substring(position).trim();
+            if (remainingText) {
+                elements.push({ type: 'text', content: remainingText });
+            }
+            break;
+        }
+
+        // Add any text before the tag
+        if (tagStart > position) {
+            const text = html.substring(position, tagStart).trim();
+            if (text) {
+                elements.push({ type: 'text', content: text });
+            }
+        }
+
+        // Find tag end
+        const tagEnd = html.indexOf('>', tagStart);
+        if (tagEnd === -1) break;
+
+        // Extract tag name
+        const fullTag = html.substring(tagStart, tagEnd + 1);
+        const tagMatch = fullTag.match(/<(\/?)(\\w+)/);
+
+        if (!tagMatch) {
+            position = tagEnd + 1;
+            continue;
+        }
+
+        const isClosing = tagMatch[1] === '/';
+        const tagName = tagMatch[2].toLowerCase();
+
+        // Handle self-closing tags
+        if (tagName === 'br' || fullTag.endsWith('/>')) {
+            elements.push({ type: 'break' });
+            position = tagEnd + 1;
+            continue;
+        }
+
+        // Only process opening tags
+        if (!isClosing) {
+            // Find matching closing tag
+            const closingTag = `</${tagName}>`;
+            const closingIndex = html.indexOf(closingTag, tagEnd + 1);
+
+            if (closingIndex !== -1) {
+                // Extract content between tags
+                const content = html.substring(tagEnd + 1, closingIndex).trim();
+
+                // Remove any nested HTML tags from content
+                const cleanContent = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+                if (cleanContent) {
+                    // Map tag to element type
+                    if (tagName === 'h1') {
+                        elements.push({ type: 'h1', content: cleanContent });
+                    } else if (tagName === 'h2') {
+                        elements.push({ type: 'h2', content: cleanContent });
+                    } else if (tagName === 'h3') {
+                        elements.push({ type: 'h3', content: cleanContent });
+                    } else if (tagName === 'p') {
+                        elements.push({ type: 'p', content: cleanContent });
+                    } else if (tagName === 'strong' || tagName === 'b') {
+                        elements.push({ type: 'bold', content: cleanContent });
+                    } else if (tagName === 'em' || tagName === 'i') {
+                        elements.push({ type: 'italic', content: cleanContent });
+                    } else if (tagName === 'div' || tagName === 'span') {
+                        elements.push({ type: 'text', content: cleanContent });
+                    }
+                }
+
+                position = closingIndex + closingTag.length;
+            } else {
+                position = tagEnd + 1;
+            }
+        } else {
+            position = tagEnd + 1;
+        }
     }
+
+    return elements;
 }
 
-doc.end();
+// Render HTML to PDF using PDFKit
+async function renderToPdf(htmlContent) {
+    return new Promise((resolve, reject) => {
+        try {
+            const doc = new PDFDocument({
+                size: 'A4',
+                margins: { top: 50, bottom: 50, left: 50, right: 50 }
+            });
+            const chunks = [];
+
+            doc.on('data', chunk => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+
+            // Parse HTML
+            const elements = parseHtmlSimple(htmlContent);
+
+            console.log('Parsed elements:', JSON.stringify(elements, null, 2));
+
+            // Render elements
+            for (const element of elements) {
+                if (element.type === 'h1') {
+                    doc.fontSize(24).font('Helvetica-Bold').text(element.content, { lineGap: 10 });
+                    doc.moveDown(0.5);
+                } else if (element.type === 'h2') {
+                    doc.fontSize(20).font('Helvetica-Bold').text(element.content, { lineGap: 8 });
+                    doc.moveDown(0.3);
+                } else if (element.type === 'h3') {
+                    doc.fontSize(16).font('Helvetica-Bold').text(element.content, { lineGap: 6 });
+                    doc.moveDown(0.3);
+                } else if (element.type === 'p') {
+                    doc.fontSize(12).font('Helvetica').text(element.content, { lineGap: 4, align: 'left' });
+                    doc.moveDown(0.5);
+                } else if (element.type === 'bold') {
+                    doc.fontSize(12).font('Helvetica-Bold').text(element.content, { continued: false });
+                } else if (element.type === 'italic') {
+                    doc.fontSize(12).font('Helvetica-Oblique').text(element.content, { continued: false });
+                } else if (element.type === 'text') {
+                    doc.fontSize(12).font('Helvetica').text(element.content, { continued: false });
+                } else if (element.type === 'break') {
+                    doc.moveDown(0.2);
+                }
+            }
+
+            doc.end();
         } catch (error) {
-    reject(error);
-}
+            reject(error);
+        }
     });
 }
 
@@ -72,8 +184,7 @@ export default async (req, res) => {
 
     console.log('Starting bulk send process...');
     console.log('PDF HTML Template present:', !!pdfHtmlTemplate);
-    console.log('Attachment format:', attachmentFormat);
-    console.log('Rotate formats:', rotateFormats);
+    console.log('First 100 chars of template:', pdfHtmlTemplate?.substring(0, 100));
 
     const results = {
         total: recipients.length,
@@ -82,9 +193,6 @@ export default async (req, res) => {
         errors: [],
         skipped: []
     };
-
-    // Note: Only PDF format is supported for now due to Vercel limitations
-    // JPG/PNG require native dependencies that can't be installed on serverless
 
     // Process in serial to respect rate limits
     for (let i = 0; i < recipients.length; i++) {
@@ -113,6 +221,8 @@ export default async (req, res) => {
                 const personalizedHtml = replaceTags(pdfHtmlTemplate, recipient);
 
                 console.log(`Rendering PDF for ${emailField}...`);
+                console.log('Personalized HTML:', personalizedHtml.substring(0, 100));
+
                 const fileBuffer = await renderToPdf(personalizedHtml);
 
                 // Auto-generate filename
@@ -135,7 +245,6 @@ export default async (req, res) => {
             } catch (pdfErr) {
                 console.error(`Failed to generate PDF for ${emailField}:`, pdfErr);
                 results.errors.push({ email: emailField, error: 'PDF Generation Failed: ' + pdfErr.message });
-                // Continue without attachment
             }
         }
 
