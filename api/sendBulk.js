@@ -1,26 +1,45 @@
 import { sendMail } from './utils/mailer.js';
-import PDFDocument from 'pdfkit';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 
 // Helper to replace {{tags}} in string
 function replaceTags(template, data) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
 }
 
-// Helper to convert HTML to PDF
-function htmlToPdf(htmlContent) {
-    return new Promise((resolve, reject) => {
-        const doc = new PDFDocument();
-        const chunks = [];
-
-        doc.on('data', chunk => chunks.push(chunk));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
-        doc.on('error', reject);
-
-        // Strip HTML tags for basic conversion
-        const text = htmlContent.replace(/<[^>]*>/g, '\n');
-        doc.fontSize(12).text(text.trim());
-        doc.end();
+// Helper to render HTML using Puppeteer
+async function renderHtmlWithPuppeteer(htmlContent, format = 'pdf') {
+    const browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
     });
+
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+    let buffer;
+    if (format === 'pdf') {
+        buffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+        });
+    } else if (format === 'jpg' || format === 'jpeg') {
+        buffer = await page.screenshot({
+            type: 'jpeg',
+            quality: 90,
+            fullPage: true,
+        });
+    } else if (format === 'png') {
+        buffer = await page.screenshot({
+            type: 'png',
+            fullPage: true,
+        });
+    }
+
+    await browser.close();
+    return buffer;
 }
 
 // Helper for delay
@@ -31,7 +50,16 @@ export default async (req, res) => {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { recipients, subjectTemplate, htmlTemplate, textTemplate, smtpConfig, pdfHtmlTemplate } = req.body;
+    const {
+        recipients,
+        subjectTemplate,
+        htmlTemplate,
+        textTemplate,
+        smtpConfig,
+        pdfHtmlTemplate,
+        attachmentFormat = 'pdf',
+        rotateFormats = false
+    } = req.body;
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
         return res.status(400).json({ error: 'Recipients list is required' });
@@ -45,8 +73,13 @@ export default async (req, res) => {
         skipped: []
     };
 
+    // Define format rotation order
+    const formatOrder = ['pdf', 'jpg', 'png'];
+
     // Process in serial to respect rate limits
-    for (const recipient of recipients) {
+    for (let i = 0; i < recipients.length; i++) {
+        const recipient = recipients[i];
+
         // Find email field (case-insensitive)
         const emailField = recipient.email || recipient.Email || recipient.EMAIL ||
             recipient['e-mail'] || recipient['E-mail'];
@@ -64,30 +97,41 @@ export default async (req, res) => {
         // Prepare attachments
         const attachments = [];
 
-        // If PDF HTML is provided, convert and attach
+        // If HTML template is provided, convert and attach
         if (pdfHtmlTemplate && pdfHtmlTemplate.trim()) {
             try {
-                const personalizedPdfHtml = replaceTags(pdfHtmlTemplate, recipient);
-                const pdfBuffer = await htmlToPdf(personalizedPdfHtml);
+                const personalizedHtml = replaceTags(pdfHtmlTemplate, recipient);
 
-                // Auto-generate filename: Invoice_{invoice}.pdf or Document_{email}.pdf
-                let filename;
-                if (recipient.invoice) {
-                    filename = `Invoice_${recipient.invoice}.pdf`;
-                } else if (recipient.Invoice) {
-                    filename = `Invoice_${recipient.Invoice}.pdf`;
-                } else {
-                    filename = `Document_${emailField.split('@')[0]}.pdf`;
+                // Determine format (rotate if enabled)
+                let currentFormat = attachmentFormat;
+                if (rotateFormats) {
+                    currentFormat = formatOrder[i % formatOrder.length];
                 }
+
+                const fileBuffer = await renderHtmlWithPuppeteer(personalizedHtml, currentFormat);
+
+                // Auto-generate filename
+                let filename;
+                const baseName = recipient.invoice || recipient.Invoice || emailField.split('@')[0];
+
+                if (recipient.invoice || recipient.Invoice) {
+                    filename = `Invoice_${baseName}.${currentFormat === 'jpg' ? 'jpg' : currentFormat}`;
+                } else {
+                    filename = `Document_${baseName}.${currentFormat === 'jpg' ? 'jpg' : currentFormat}`;
+                }
+
+                const contentType = currentFormat === 'pdf' ? 'application/pdf' : `image/${currentFormat === 'jpg' ? 'jpeg' : currentFormat}`;
 
                 attachments.push({
                     filename: filename,
-                    content: pdfBuffer,
-                    contentType: 'application/pdf'
+                    content: fileBuffer,
+                    contentType: contentType
                 });
+
+                console.log(`✓ Generated ${currentFormat.toUpperCase()} attachment for ${emailField}: ${filename}`);
             } catch (pdfErr) {
-                console.error(`Failed to generate PDF for ${emailField}:`, pdfErr);
-                results.errors.push({ email: emailField, error: 'PDF Generation Failed: ' + pdfErr.message });
+                console.error(`Failed to generate attachment for ${emailField}:`, pdfErr);
+                results.errors.push({ email: emailField, error: 'Attachment Generation Failed: ' + pdfErr.message });
             }
         }
 

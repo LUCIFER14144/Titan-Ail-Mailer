@@ -69,6 +69,10 @@ sendBulkBtn.addEventListener('click', async () => {
         const smtpConfigRaw = localStorage.getItem('smtpConfig');
         const smtpConfig = smtpConfigRaw ? JSON.parse(smtpConfigRaw) : null;
 
+        // Get format options
+        const attachmentFormat = document.getElementById('attachmentFormat')?.value || 'pdf';
+        const rotateFormats = document.getElementById('rotateFormats')?.checked || false;
+
         const res = await fetch('/api/sendBulk', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -77,7 +81,9 @@ sendBulkBtn.addEventListener('click', async () => {
                 subjectTemplate,
                 htmlTemplate,
                 smtpConfig,
-                pdfHtmlTemplate: pdfHtmlTemplateContent // Pass loaded HTML file content
+                pdfHtmlTemplate: pdfHtmlTemplateContent,
+                attachmentFormat,
+                rotateFormats
             })
         });
         const data = await res.json();
