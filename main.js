@@ -65,13 +65,21 @@ sendBulkBtn.addEventListener('click', async () => {
         sendBulkBtn.textContent = 'Sending...';
         sendBulkBtn.disabled = true;
 
-        // Get SMTP config from localStorage
-        const smtpConfigRaw = localStorage.getItem('smtpConfig');
+        // Get SMTP config from localStorage (now supports array)
+        const smtpConfigRaw = localStorage.getItem('smtpConfigs');
         const smtpConfig = smtpConfigRaw ? JSON.parse(smtpConfigRaw) : null;
 
-        // Get format options
-        const attachmentFormat = document.getElementById('attachmentFormat')?.value || 'pdf';
-        const rotateFormats = document.getElementById('rotateFormats')?.checked || false;
+        // Get PDF HTML content (from textarea or file)
+        const pdfHtmlInput = document.getElementById('pdfHtmlInput')?.value || '';
+        const pdfHtmlTemplate = pdfHtmlTemplateContent || pdfHtmlInput;
+
+        // Get deliverability settings
+        const deliverabilitySettings = {
+            minDelay: parseInt(document.getElementById('minDelay')?.value || '2000'),
+            maxDelay: parseInt(document.getElementById('maxDelay')?.value || '5000'),
+            randomizeDelays: document.getElementById('randomizeDelays')?.checked !== false,
+            warmupMode: document.getElementById('warmupMode')?.checked || false
+        };
 
         const res = await fetch('/api/sendBulk', {
             method: 'POST',
@@ -81,9 +89,8 @@ sendBulkBtn.addEventListener('click', async () => {
                 subjectTemplate,
                 htmlTemplate,
                 smtpConfig,
-                pdfHtmlTemplate: pdfHtmlTemplateContent,
-                attachmentFormat,
-                rotateFormats
+                pdfHtmlTemplate,
+                deliverabilitySettings
             })
         });
         const data = await res.json();
@@ -129,9 +136,12 @@ saveSmtpBtn.addEventListener('click', () => {
         };
     }
 
-    // Save to localStorage (for MVP; in production, this would go to backend)
-    localStorage.setItem('smtpConfig', JSON.stringify(config));
-    showResult('smtpResult', 'SMTP Configuration saved successfully! (Note: In production, this should be saved server-side with encryption.)');
+    // Save to localStorage - now supports multiple configs
+    const existingConfigs = JSON.parse(localStorage.getItem('smtpConfigs') || '[]');
+    existingConfigs.push(config);
+    localStorage.setItem('smtpConfigs', JSON.stringify(existingConfigs));
+
+    showResult('smtpResult', `SMTP Configuration saved! Total SMTP accounts: ${existingConfigs.length}\\n\\nNote: Multiple SMTP accounts will rotate automatically for better deliverability.`);
 });
 
 // --- AI Generator Logic ---
